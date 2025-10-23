@@ -1,0 +1,82 @@
+================================================================================
+MetaNeXtStage 呼び出し箇所の完全な情報
+================================================================================
+
+【結論】
+MetaNeXtStage は以下の1箇所でのみ呼び出されています：
+
+ファイル: models/inceptionnext.py
+行番号: 233行目
+メソッド: MetaNeXt.__init__()
+
+================================================================================
+【定義場所】
+================================================================================
+
+ファイル: models/inceptionnext.py
+行番号: 127-172行目
+
+class MetaNeXtStage(nn.Module):
+    def __init__(
+            self,
+            in_chs,
+            out_chs,
+            ds_stride=2,
+            depth=2,
+            drop_path_rates=None,
+            ls_init_value=1.0,
+            token_mixer=nn.Identity,
+            act_layer=nn.GELU,
+            norm_layer=None,
+            mlp_ratio=4,
+    ):
+        ...
+
+================================================================================
+【呼び出し箇所】
+================================================================================
+
+ファイル: models/inceptionnext.py
+行番号: 231-245行目
+コンテキスト: MetaNeXt.__init__() メソッド内のループ
+
+    # feature resolution stages, each consisting of multiple residual blocks
+    for i in range(num_stage):
+        out_chs = dims[i]
+        stages.append(MetaNeXtStage(           # ← ★ここで呼び出し★ (233行目)
+            prev_chs,
+            out_chs,
+            ds_stride=2 if i > 0 else 1, 
+            depth=depths[i],
+            drop_path_rates=dp_rates[i],
+            ls_init_value=ls_init_value,
+            act_layer=act_layer,
+            token_mixers=token_mixers[i],
+            norm_layer=norm_layer,
+            mlp_ratio=mlp_ratios[i],
+        ))
+        prev_chs = out_chs
+
+================================================================================
+【検証方法】
+================================================================================
+
+以下のコマンドで確認できます：
+
+$ grep -n "MetaNeXtStage" models/inceptionnext.py
+127:class MetaNeXtStage(nn.Module):
+233:            stages.append(MetaNeXtStage(
+
+================================================================================
+【詳細情報】
+================================================================================
+
+1. 定義: 127行目で MetaNeXtStage クラスが定義される
+2. 呼び出し: 233行目で MetaNeXtStage がインスタンス化される
+3. 呼び出し回数: ループ内で num_stage 回（通常は4回）
+4. 目的: モデルの各解像度ステージを構築
+
+各モデル variant（tiny, small, base等）では、このループが4回実行され、
+4つの MetaNeXtStage インスタンスが作成されます。
+
+================================================================================
